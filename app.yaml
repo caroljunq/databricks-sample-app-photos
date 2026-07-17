@@ -1,0 +1,14 @@
+command:
+  - streamlit
+  - run
+  - app.py
+env:
+  - name: DATABRICKS_WAREHOUSE_ID
+    value: "3ecd5a4aab44c6b9"
+permissions:
+  - permission: CAN_USE
+    level: APP
+    resource_type: servingEndpoints
+  - permission: CAN_USE
+    level: APP
+    resource_type: sql
