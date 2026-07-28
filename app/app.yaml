@@ -1,0 +1,44 @@
+# =============================================================================
+# app.yaml — configuração do Databricks App
+# Substitua os valores xxxx por seus valores reais.
+# Como obter cada valor — ver runbook_deploy_app_photos.ipynb
+# =============================================================================
+
+command:
+  - streamlit
+  - run
+  - app.py
+
+env:
+  # ID do SQL Warehouse (aba Cliente Table)
+  # Obter: databricks warehouses list -p <profile> -o json | jq -r '.[] | "\(.id)\t\(.name)"'
+  # Ou UI: SQL Warehouses → warehouse → Overview → ID
+  - name: DATABRICKS_WAREHOUSE_ID
+    value: "xxxxxxx"
+
+  # OPCIONAL (Seção 2 do runbook) — Lakebase Autoscaling.
+  # Remova este bloco se for deployar só Photo Album + Cliente Table.
+  # NÃO hardcodar o host: valueFrom aponta para a resource key do app ("postgres").
+  # Runtime injeta também: PGHOST, PGDATABASE, PGPORT, PGUSER, PGSSLMODE.
+  - name: LAKEBASE_ENDPOINT
+    valueFrom: postgres
+
+  # Opcional — volume UC para Photo Album
+  # Ex.: /Volumes/<catalog>/<schema>/<volume>
+  - name: VOLUME_PATH
+    value: "/Volumes/xxxxxxx/default/fotos"
+
+  # Opcional — tabela UC fully-qualified para Cliente Table
+  # Use backticks se o catálogo tiver hífen: `meu-catalog`.default.clientes
+  - name: CLIENTES_TABLE
+    value: "`xxxxxxx`.default.clientes"
+
+# Permissões genéricas do SP do app sobre tipos de recurso.
+# O bind concreto (qual warehouse / qual Lakebase) é feito em App resources.
+permissions:
+  - permission: CAN_USE
+    level: APP
+    resource_type: servingEndpoints
+  - permission: CAN_USE
+    level: APP
+    resource_type: sql

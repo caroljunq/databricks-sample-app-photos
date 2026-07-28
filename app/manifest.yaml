@@ -1,0 +1,3 @@
+version: 1
+name: "Demo Energia Album"
+description: "Streamlit app — Photo Album (UC Volume), Cliente Table (SQL Warehouse), Dados Lakebase (Postgres)."
