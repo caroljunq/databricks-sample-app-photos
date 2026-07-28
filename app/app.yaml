@@ -33,6 +33,11 @@ env:
   - name: CLIENTES_TABLE
     value: "`xxxxxxx`.default.clientes"
 
+  # Opcional — Dashboard ID para embedar na aba AI/BI Dashboard
+  # Obter: UI Dashboards → dashboard → URL contém o ID
+  - name: DASHBOARD_ID
+    value: "xxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+
 # Permissões genéricas do SP do app sobre tipos de recurso.
 # O bind concreto (qual warehouse / qual Lakebase) é feito em App resources.
 permissions:

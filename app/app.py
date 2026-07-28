@@ -4,6 +4,7 @@ Abas:
   1) Photo Album  — upload/galeria em Unity Catalog Volume
   2) Cliente Table — SELECT via SQL Warehouse
   3) Dados Lakebase — CRUD em Postgres (Lakebase Autoscaling)
+  4) AI/BI Dashboard — Embed de dashboard AI/BI
 
 Variáveis de ambiente esperadas (ver app.yaml + runbook):
   DATABRICKS_WAREHOUSE_ID  — ID do SQL Warehouse
@@ -26,6 +27,7 @@ st.title("Demo Energia Album")
 
 VOLUME_PATH = os.environ.get("VOLUME_PATH")
 CLIENTES_TABLE = os.environ.get("CLIENTES_TABLE")
+DASHBOARD_ID = os.environ.get("DASHBOARD_ID")
 IMAGE_EXTENSIONS = (".jpg", ".jpeg", ".png", ".gif")
 
 
@@ -63,7 +65,7 @@ def get_lakebase_connection():
     )
 
 
-tab1, tab2, tab3 = st.tabs(["📷 Photo Album", "📊 Cliente Table", "🗄️ Dados Lakebase"])
+tab1, tab2, tab3, tab4 = st.tabs(["📷 Photo Album", "📊 Cliente Table", "🗄️ Dados Lakebase", "📈 AI/BI Dashboard"])
 
 # ---------------------------------------------------------------------------
 # TAB 1 — Photo Album
@@ -279,3 +281,102 @@ CLIENTES_TABLE: {CLIENTES_TABLE}
 - Tabela `public.registros` existe e tem GRANTs para o SP
                 """
             )
+
+# ---------------------------------------------------------------------------
+# TAB 4 — AI/BI Dashboard
+# ---------------------------------------------------------------------------
+with tab4:
+    st.header("AI/BI Dashboard")
+    
+    if not DASHBOARD_ID:
+        st.warning(
+            "⚠️ Dashboard ID não configurado. "
+            "Configure a variável DASHBOARD_ID no app.yaml."
+        )
+        st.info(
+            "**Passo a passo para embedar o dashboard:**\n\n"
+            "1. **Criar dashboard**: Crie um dashboard AI/BI no Databricks\n"
+            "2. **Publicar**: Clique em 'Publish' no dashboard (obrigatório para embed)\n"
+            "3. **Obter ID**: Copie o ID da URL após `/dashboards/`: `/dashboards/<ID>`\n"
+            "4. **Compartilhar**: No dashboard, clique 'Share' e adicione o App ID (Service Principal)\n"
+            "5. **Configurar app.yaml**: Cole o Dashboard ID na variável DASHBOARD_ID\n"
+            "6. **Admin liberar**: Settings → Security → External access → Embed dashboards → "
+            "Permitir `*.databricksapps.com`"
+        )
+    else:
+        st.caption(f"Dashboard ID: `{DASHBOARD_ID}`")
+        
+        # Obter workspace host do ambiente
+        workspace_host = os.environ.get("DATABRICKS_HOST", "")
+        
+        if not workspace_host:
+            st.error(
+                "❌ Variável de ambiente DATABRICKS_HOST não encontrada. "
+                "Não é possível construir a URL do dashboard."
+            )
+        else:
+            # Construir URL do dashboard embedado
+            # Remove protocolo se existir
+            if workspace_host.startswith("https://"):
+                workspace_host = workspace_host[8:]
+            elif workspace_host.startswith("http://"):
+                workspace_host = workspace_host[7:]
+            
+            # Remove trailing slash
+            workspace_host = workspace_host.rstrip("/")
+            
+            # Construir URL completa para embed (usar /embed/dashboardsv3/ não /sql/dashboards/)
+            dashboard_url = f"https://{workspace_host}/embed/dashboardsv3/{DASHBOARD_ID}"
+            
+            # Mostrar informações do dashboard
+            col1, col2 = st.columns([3, 1])
+            
+            with col1:
+                st.info(f"📊 Dashboard: `{DASHBOARD_ID}`")
+            
+            with col2:
+                # Botão para abrir em nova aba
+                st.link_button(
+                    "🔗 Abrir Dashboard",
+                    dashboard_url,
+                    use_container_width=True
+                )
+            
+            st.markdown("---")
+            
+            # Tentar embed direto (pode não funcionar devido a X-Frame-Options)
+            st.warning(
+                "⚠️ **Nota sobre Embed:**\n\n"
+                "Dashboards do Databricks têm restrições de segurança que podem impedir "
+                "o carregamento em iframes. Se o dashboard não aparecer abaixo, "
+                "use o botão 'Abrir Dashboard' acima para visualizá-lo em uma nova aba."
+            )
+            
+            # Tentar iframe com permissões
+            iframe_html = f"""
+            <style>
+                .dashboard-container {{
+                    width: 100%;
+                    height: 800px;
+                    border: 2px solid #e0e0e0;
+                    border-radius: 8px;
+                    overflow: hidden;
+                    background: #f5f5f5;
+                }}
+                .dashboard-iframe {{
+                    width: 100%;
+                    height: 100%;
+                    border: none;
+                }}
+            </style>
+            <div class="dashboard-container">
+                <iframe 
+                    class="dashboard-iframe"
+                    src="{dashboard_url}"
+                    sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
+                    loading="lazy"
+                ></iframe>
+            </div>
+            """
+            
+            st.components.v1.html(iframe_html, height=820, scrolling=True)
