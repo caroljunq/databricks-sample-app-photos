@@ -15,6 +15,7 @@ Variáveis de ambiente esperadas (ver app.yaml + runbook):
 """
 
 import os
+from io import BytesIO
 
 import psycopg2
 import streamlit as st
@@ -80,7 +81,7 @@ with tab1:
     if uploaded_files:
         for uploaded_file in uploaded_files:
             dest = f"{VOLUME_PATH}/{uploaded_file.name}"
-            w.files.upload(dest, uploaded_file.getbuffer(), overwrite=True)
+            w.files.upload(dest, BytesIO(uploaded_file.getbuffer()), overwrite=True)
         st.success(f"Saved {len(uploaded_files)} file(s) to {VOLUME_PATH}")
 
     st.subheader("Gallery")
@@ -100,7 +101,7 @@ with tab1:
                     st.image(
                         img_bytes,
                         caption=os.path.basename(entry.path),
-                        use_container_width=True,
+                        use_column_width=True,
                     )
         else:
             st.info("No images in the album yet. Upload some above!")
