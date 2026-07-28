@@ -1,7 +1,7 @@
 # =============================================================================
 # app.yaml — configuração do Databricks App
 # Substitua os valores xxxx por seus valores reais.
-# Como obter cada valor — ver runbook_deploy_app_photos.ipynb
+# Como obter cada valor — ver 1-guia-passo-a-passo.ipynb
 # =============================================================================
 
 command:
